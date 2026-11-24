@@ -3,9 +3,8 @@ defmodule BotArmySentry.Application do
   Sentry Bot application supervisor.
 
   Follows bot army pattern with environment-aware startup:
-  - Repo not started in :test (tests inject mocks)
   - PulsePublisher sends `system.health` liveness every 30s and rich `bot.<service>.pulse` every 30 minutes
-  - Workers not started in :test (gated by @env)
+  - Workers not started in :test (gated by env check)
 
   Observability: see `PulsePublisher` — fleet UIs keyed on Synapse hydration should use `system.health` freshness (90s), not pulse interval alone.
   """
@@ -19,20 +18,11 @@ defmodule BotArmySentry.Application do
 
     children =
       []
-      |> maybe_add_repo()
       |> maybe_add_pulse_publisher()
       |> maybe_add_workers()
 
     opts = [strategy: :one_for_one, name: BotArmySentry.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp maybe_add_repo(children) do
-    if Application.get_env(:bot_army_sentry, :env) == :test do
-      children
-    else
-      [{BotArmySentry.Repo, []} | children]
-    end
   end
 
   defp maybe_add_pulse_publisher(children) do
