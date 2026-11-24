@@ -1,0 +1,10 @@
+{application,ssl_verify_fun,
+             [{config_mtime,1795523569},
+              {optional_applications,[]},
+              {applications,[kernel,stdlib,ssl]},
+              {description,"SSL verification library"},
+              {modules,[ssl_verify_fingerprint,ssl_verify_fun_cert_helpers,
+                        ssl_verify_fun_encodings,ssl_verify_hostname,
+                        ssl_verify_pk,ssl_verify_string,ssl_verify_util]},
+              {registered,[]},
+              {vsn,"1.1.9"}]}.

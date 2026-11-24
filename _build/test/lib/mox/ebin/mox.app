@@ -1,0 +1,11 @@
+{application,mox,
+             [{config_mtime,1795523563},
+              {optional_applications,[]},
+              {applications,[kernel,stdlib,elixir,logger,nimble_ownership]},
+              {description,"Mocks and explicit contracts for Elixir"},
+              {modules,['Elixir.Mox','Elixir.Mox.Application',
+                        'Elixir.Mox.UnexpectedCallError',
+                        'Elixir.Mox.VerificationError']},
+              {registered,[]},
+              {vsn,"1.3.2"},
+              {mod,{'Elixir.Mox.Application',[]}}]}.
