@@ -22,7 +22,7 @@ defmodule BotArmySentry.Dispatcher do
     subject = "agent.session.#{@junior_label}.inbox"
 
     case publish_assignment(subject, payload) do
-      :ok ->
+      {:ok, _subject} ->
         IO.puts("[Sentry] Assigned #{trigger} for #{bot} to #{@junior_label}")
         :ok
 

@@ -49,7 +49,7 @@ defmodule BotArmySentry.Monitor do
     old_status = Map.get(state.health_state, bot)
 
     if old_status != status and status == "unhealthy" do
-      Logger.warn("[Sentry] Health Flip detected: #{bot} is now UNHEALTHY")
+      Logger.warning("[Sentry] Health Flip detected: #{bot} is now UNHEALTHY")
       BotArmySentry.Dispatcher.assign_task("HEALTH_FLIP", bot)
     end
 
@@ -77,13 +77,13 @@ defmodule BotArmySentry.Monitor do
     missing = Map.keys(old) -- Map.keys(current)
 
     Enum.each(missing, fn bot ->
-      Logger.warn("[Sentry] Registry Gap detected: #{bot} has disappeared!")
+      Logger.warning("[Sentry] Registry Gap detected: #{bot} has disappeared!")
       BotArmySentry.Dispatcher.assign_task("REGISTRY_GAP", bot)
     end)
   end
 
   @impl true
-  def handle_cast({:health_update, bot, status}, state) do
+  def handle_cast({:health_update, _bot, _status}, state) do
     # Logic from handle_health_update
     # Simplified for scaffold
     {:noreply, state}
