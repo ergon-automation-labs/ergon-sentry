@@ -49,37 +49,41 @@ defmodule BotArmySentry.NATS.Consumer do
   def handle_continue(:connect, state) do
     case GenServer.call(BotArmyLibraryRuntime.NATS.Connection, :get_connection, 5000) do
       {:ok, conn} ->
-        BotArmyLibraryRuntime.NATS.Connection.subscribe_to_status()
-        Logger.info("Connected to NATS, subscribing to topics")
-
-        subscriptions =
-          [
-            # Add your subjects here
-          ]
-          |> Enum.map(fn subject ->
-            case Gnat.sub(conn, self(), subject) do
-              {:ok, sub} ->
-                Logger.info("Subscribed to #{subject}")
-                sub
-
-              {:error, reason} ->
-                Logger.error("Failed to subscribe to #{subject}: #{inspect(reason)}")
-                nil
-            end
-          end)
-          |> Enum.filter(&(not is_nil(&1)))
-
-        # Register subjects for runtime discovery
-        BotArmyLibraryRuntime.Registry.register("sentry", @subjects, @version)
-
-        Process.send_after(self(), :registry_heartbeat, @registry_heartbeat_ms)
-
-        {:noreply, %{state | subscriptions: subscriptions, conn: conn}}
+        handle_connection_established(conn, state)
 
       {:error, _reason} ->
         Logger.warning("NATS connection not ready, will retry")
         Process.send_after(self(), :connect_retry, @reconnect_delay_ms)
         {:noreply, state}
+    end
+  end
+
+  defp handle_connection_established(conn, state) do
+    BotArmyLibraryRuntime.NATS.Connection.subscribe_to_status()
+    Logger.info("Connected to NATS, subscribing to topics")
+
+    subscriptions =
+      [
+        # Add your subjects here
+      ]
+      |> Enum.map(&subscribe_to_subject(conn, &1))
+      |> Enum.filter(&(not is_nil(&1)))
+
+    BotArmyLibraryRuntime.Registry.register("sentry", @subjects, @version)
+    Process.send_after(self(), :registry_heartbeat, @registry_heartbeat_ms)
+
+    {:noreply, %{state | subscriptions: subscriptions, conn: conn}}
+  end
+
+  defp subscribe_to_subject(conn, subject) do
+    case Gnat.sub(conn, self(), subject) do
+      {:ok, sub} ->
+        Logger.info("Subscribed to #{subject}")
+        sub
+
+      {:error, reason} ->
+        Logger.error("Failed to subscribe to #{subject}: #{inspect(reason)}")
+        nil
     end
   end
 
@@ -107,28 +111,34 @@ defmodule BotArmySentry.NATS.Consumer do
     BotArmyLibraryRuntime.Tracing.with_consumer_span(msg.topic, Map.get(msg, :headers), fn ->
       Logger.debug("Received NATS message on subject: #{msg.topic}")
 
-      # Handle request/reply patterns
       if msg.reply_to do
-        case msg.topic do
-          # Add your request/reply handlers here
-          # "example.task.list" ->
-          #   handle_task_list(msg, state)
-          _ ->
-            Logger.debug("Unknown request/reply subject: #{msg.topic}")
-        end
+        handle_request_reply(msg, state)
       else
-        # Handle pub/sub messages
-        case BotArmyLibraryCore.NATS.Decoder.decode(msg.body) do
-          {:ok, decoded_message} ->
-            route_message(decoded_message, msg.topic)
-
-          {:error, reason} ->
-            Logger.warning("Failed to decode message from #{msg.topic}: #{inspect(reason)}")
-        end
+        handle_pub_sub(msg)
       end
     end)
 
     {:noreply, state}
+  end
+
+  defp handle_request_reply(msg, _state) do
+    case msg.topic do
+      # Add your request/reply handlers here
+      # "example.task.list" ->
+      #   handle_task_list(msg, _state)
+      _ ->
+        Logger.debug("Unknown request/reply subject: #{msg.topic}")
+    end
+  end
+
+  defp handle_pub_sub(msg) do
+    case BotArmyLibraryCore.NATS.Decoder.decode(msg.body) do
+      {:ok, decoded_message} ->
+        route_message(decoded_message, msg.topic)
+
+      {:error, reason} ->
+        Logger.warning("Failed to decode message from #{msg.topic}: #{inspect(reason)}")
+    end
   end
 
   @impl true
