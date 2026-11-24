@@ -70,7 +70,11 @@ defmodule BotArmySentry.Monitor do
   defp fetch_registry do
     # Request the registry list from NATS
     # In reality: Nats.request("bot_army.registry.bots.list", %{})
-    {:ok, %{"bot_army_gtd" => "healthy", "bot_army_trading_strategy" => "healthy"}}
+    try do
+      {:ok, %{"bot_army_gtd" => "healthy", "bot_army_trading_strategy" => "healthy"}}
+    rescue
+      e -> {:error, e}
+    end
   end
 
   defp detect_registry_gaps(old, current) do

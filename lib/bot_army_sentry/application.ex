@@ -12,8 +12,6 @@ defmodule BotArmySentry.Application do
 
   use Application
 
-  @env Mix.env()
-
   @impl true
   def start(_type, _args) do
     # Note: BotArmyLibraryRuntime.Telemetry and BotArmyLibraryRuntime.NATS.Connection are started
@@ -30,7 +28,7 @@ defmodule BotArmySentry.Application do
   end
 
   defp maybe_add_repo(children) do
-    if @env == :test do
+    if Mix.env() == :test do
       children
     else
       [{BotArmySentry.Repo, []} | children]
@@ -38,7 +36,7 @@ defmodule BotArmySentry.Application do
   end
 
   defp maybe_add_pulse_publisher(children) do
-    if @env == :test do
+    if Mix.env() == :test do
       children
     else
       [{BotArmySentry.PulsePublisher, []} | children]
@@ -46,7 +44,7 @@ defmodule BotArmySentry.Application do
   end
 
   defp maybe_add_workers(children) do
-    if @env == :test do
+    if Mix.env() == :test do
       children
     else
       # Bot-specific workers and pollers go here (GenServers that do async work)
