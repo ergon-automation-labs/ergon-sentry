@@ -28,7 +28,7 @@ defmodule BotArmySentry.Application do
   end
 
   defp maybe_add_repo(children) do
-    if Mix.env() == :test do
+    if Application.get_env(:bot_army_sentry, :env) == :test do
       children
     else
       [{BotArmySentry.Repo, []} | children]
@@ -36,7 +36,7 @@ defmodule BotArmySentry.Application do
   end
 
   defp maybe_add_pulse_publisher(children) do
-    if Mix.env() == :test do
+    if Application.get_env(:bot_army_sentry, :env) == :test do
       children
     else
       [{BotArmySentry.PulsePublisher, []} | children]
@@ -44,12 +44,12 @@ defmodule BotArmySentry.Application do
   end
 
   defp maybe_add_workers(children) do
-    if Mix.env() == :test do
+    if Application.get_env(:bot_army_sentry, :env) == :test do
       children
     else
       # Bot-specific workers and pollers go here (GenServers that do async work)
       # Examples: Scheduler, Poller, Watcher
-      # Pattern: gated with if @env == :test to prevent long-running processes in test
+      # Pattern: gated with if Application.get_env(:bot_army_sentry, :env) == :test to prevent long-running processes in test
       [{BotArmySentry.Monitor, []} | children]
     end
   end
